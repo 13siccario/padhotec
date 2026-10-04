@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f4f6fa;
+  --grid: #dce2ec;
+  --ink: #0f1b33;
+  --ink-soft: #4a5775;
+  --rule: #c9d1e0;
+  --blue: #2536e8;
+  --blue-deep: #1a27b8;
+  --green: #12805c;
+  --amber: #b86e00;
+  --red: #b3261e;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-grid: var(--grid);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-blue: var(--blue);
+  --color-blue-deep: var(--blue-deep);
+  --color-green: var(--green);
+  --color-amber: var(--amber);
+  --color-red: var(--red);
+  --font-sans: var(--font-grotesk), system-ui, sans-serif;
+}
+
+body {
+  color: var(--ink);
+  font-family: var(--font-grotesk), system-ui, sans-serif;
+  background-color: var(--paper);
+  /* Graph paper: the one decorative device in the app. */
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-attachment: fixed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
