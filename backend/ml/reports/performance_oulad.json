@@ -1,0 +1,84 @@
+{
+  "half_life_mae_on_tuning_half": {
+    "7": 0.21464679600415687,
+    "15": 0.16471843184164411,
+    "30": 0.13500579657446946,
+    "60": 0.1251331560862967,
+    "90": 0.12352107233137728,
+    "120": 0.12310172063882042,
+    "100000": 0.12327331509920054
+  },
+  "best_half_life_days": 120,
+  "noise_sd_coverage_on_tuning_half": {
+    "0.0": 0.6487765291666093,
+    "0.05": 0.7001086612656974,
+    "0.06": 0.7186360947966384,
+    "0.07": 0.7373973563676877,
+    "0.08": 0.7559247898986287,
+    "0.09": 0.7733518561820008,
+    "0.1": 0.7915354249480764,
+    "0.15": 0.8709681856319547,
+    "0.2": 0.9286962023575368
+  },
+  "chosen_noise_sd": 0.1,
+  "app_defaults": {
+    "half_life_days": 90.0,
+    "noise_sd": 0.1
+  },
+  "test_half_app_defaults": {
+    "n": 73366,
+    "mae_model": 0.12273385188457721,
+    "mae_baseline_global_mean": 0.1436771256440313,
+    "mae_baseline_last_score": 0.13869926123817572,
+    "mae_baseline_mean_of_earlier": 0.12068495536205716,
+    "interval_80_coverage": 0.7952321238720933,
+    "interval_80_mean_width": 0.3823326789679039
+  },
+  "test_half_best_half_life_and_calibrated_noise": {
+    "n": 73366,
+    "mae_model": 0.12228402289956192,
+    "mae_baseline_global_mean": 0.1436771256440313,
+    "mae_baseline_last_score": 0.13869926123817572,
+    "mae_baseline_mean_of_earlier": 0.12068495536205716,
+    "interval_80_coverage": 0.7858953738789085,
+    "interval_80_mean_width": 0.3721124254732271
+  },
+  "test_half_by_number_of_earlier_scores": {
+    "1": {
+      "n": 10738,
+      "mae_model": 0.14844102413761556,
+      "mae_baseline_global_mean": 0.13061780592289068,
+      "mae_baseline_last_score": 0.13877817098156078,
+      "mae_baseline_mean_of_earlier": 0.13877817098156078,
+      "interval_80_coverage": 0.8339541814118085,
+      "interval_80_mean_width": 0.4857418096450255
+    },
+    "2": {
+      "n": 10738,
+      "mae_model": 0.1418559141780819,
+      "mae_baseline_global_mean": 0.14898584466381076,
+      "mae_baseline_last_score": 0.14062767740733842,
+      "mae_baseline_mean_of_earlier": 0.13662413857329112,
+      "interval_80_coverage": 0.7697895325013969,
+      "interval_80_mean_width": 0.42171243384590135
+    },
+    "3": {
+      "n": 9872,
+      "mae_model": 0.11727320484705192,
+      "mae_baseline_global_mean": 0.1473083468395462,
+      "mae_baseline_last_score": 0.14158326580226904,
+      "mae_baseline_mean_of_earlier": 0.1175135062128579,
+      "interval_80_coverage": 0.8295178282009724,
+      "interval_80_mean_width": 0.39256676276243596
+    },
+    "5": {
+      "n": 7129,
+      "mae_model": 0.11125748270476721,
+      "mae_baseline_global_mean": 0.14438995651564035,
+      "mae_baseline_last_score": 0.1476350119231309,
+      "mae_baseline_mean_of_earlier": 0.11712666573151914,
+      "interval_80_coverage": 0.8088090896338898,
+      "interval_80_mean_width": 0.35667729375033497
+    }
+  }
+}

@@ -116,6 +116,42 @@ export type Profile = {
   weekly_study_hours: number | null;
 };
 
+export type Mastery = {
+  mean: number;
+  lo: number;
+  hi: number;
+  evidence: number;
+  n_observations: number;
+  last_evidence_at: string | null;
+};
+export type Performance = {
+  mean: number;
+  lo: number;
+  hi: number;
+  p_pass: number;
+  pass_mark: number;
+  covered_weight: number;
+};
+export type CourseInsight = {
+  course_id: number;
+  name: string;
+  exam_date: string | null;
+  topics: { topic_id: number; name: string; weight: number; mastery: Mastery }[];
+  performance: Performance | null;
+  performance_note: string | null;
+};
+export type Risk = {
+  status: "ok" | "insufficient_data";
+  message: string | null;
+  probability: number | null;
+  typical: number | null;
+  level: "low" | "elevated" | "high" | null;
+  horizon_days: number;
+  drivers: { label: string; effect: "raises" | "lowers"; detail: string }[];
+  model_version: string | null;
+};
+export type Insights = { generated_at: string; courses: CourseInsight[]; risk: Risk };
+
 export const api = {
   register: (email: string, password: string, consent: boolean) =>
     request<{ access_token: string }>("/auth/register", { method: "POST", json: { email, password, consent } }),
@@ -134,6 +170,8 @@ export const api = {
   addTopic: (courseId: number, name: string, weight: number) =>
     request<Topic>(`/courses/${courseId}/topics`, { method: "POST", json: { name, weight } }),
   deleteTopic: (id: number) => request<void>(`/courses/topics/${id}`, { method: "DELETE" }),
+
+  insights: () => request<Insights>("/insights"),
 
   sessions: () => request<StudySession[]>("/sessions"),
   logSession: (s: Pick<StudySession, "topic_id" | "minutes" | "confidence_before" | "confidence_after">) =>

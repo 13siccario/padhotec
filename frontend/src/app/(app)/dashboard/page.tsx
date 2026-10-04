@@ -1,19 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { RangeBar } from "@/components/ui";
+import { CourseSection } from "@/components/CourseSection";
+import { RiskPanel } from "@/components/RiskPanel";
 import { api } from "@/lib/api";
 import { useLoad } from "@/lib/hooks";
-import { formatMinutes, lastSevenDays, nextExam, parseDate, summariseTopics } from "@/lib/stats";
+import { formatMinutes, lastSevenDays, nextExam, parseDate } from "@/lib/stats";
 
 async function loadDashboard() {
-  const [courses, sessions, assessments, profile] = await Promise.all([
+  const [courses, sessions, assessments, profile, insights] = await Promise.all([
     api.courses(),
     api.sessions(),
     api.assessments(),
     api.profile(),
+    api.insights(),
   ]);
-  return { courses, sessions, assessments, profile };
+  return { courses, sessions, assessments, profile, insights };
 }
 
 export default function DashboardPage() {
@@ -22,7 +24,7 @@ export default function DashboardPage() {
   if (loading) return <p className="text-ink-soft">Loading your dashboard</p>;
   if (error || !data) return <p role="alert" className="text-red">{error ?? "Could not load your dashboard."}</p>;
 
-  const { courses, sessions, assessments, profile } = data;
+  const { courses, sessions, assessments, profile, insights } = data;
   const now = new Date();
 
   if (courses.length === 0) {
@@ -118,61 +120,18 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {courses.map((course) => {
-        const rows = summariseTopics(course, sessions, assessments, now);
-        return (
-          <section key={course.id} aria-labelledby={`course-${course.id}`}>
-            <h2 id={`course-${course.id}`} className="text-xl font-semibold">
-              {course.name}
-            </h2>
-            {rows.length === 0 ? (
-              <p className="mt-3 text-ink-soft">
-                No topics yet.{" "}
-                <Link href="/courses" className="text-blue underline">
-                  Add topics
-                </Link>
-              </p>
-            ) : (
-              <table className="mt-3 w-full text-left">
-                <caption className="sr-only">Topics in {course.name}</caption>
-                <thead>
-                  <tr className="border-b border-ink text-sm text-ink-soft">
-                    <th className="py-2 pr-4 font-medium">Topic</th>
-                    <th className="py-2 pr-4 font-medium">Studied, 14 days</th>
-                    <th className="hidden py-2 pr-4 font-medium sm:table-cell">Confidence (1 to 5)</th>
-                    <th className="py-2 text-right font-medium">Last score</th>
-                  </tr>
-                </thead>
-                <tbody className="tabular-nums">
-                  {rows.map(({ topic, minutes14d, confidence, lastScore }) => (
-                    <tr key={topic.id} className="border-b border-rule">
-                      <td className="py-3 pr-4 font-medium">
-                        {topic.name}
-                        {confidence && (
-                          <span className="mt-2 block sm:hidden">
-                            <RangeBar from={confidence.before} to={confidence.after} />
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4 text-ink-soft">{minutes14d > 0 ? formatMinutes(minutes14d) : "None"}</td>
-                      <td className="hidden py-3 pr-4 sm:table-cell">
-                        {confidence ? (
-                          <RangeBar from={confidence.before} to={confidence.after} />
-                        ) : (
-                          <span className="text-ink-soft">Not rated</span>
-                        )}
-                      </td>
-                      <td className="py-3 text-right">
-                        {lastScore === null ? <span className="text-ink-soft">None</span> : `${Math.round(lastScore * 100)}%`}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </section>
-        );
-      })}
+      <RiskPanel risk={insights.risk} />
+
+      {courses.map((course) => (
+        <CourseSection
+          key={course.id}
+          course={course}
+          insight={insights.courses.find((c) => c.course_id === course.id)}
+          sessions={sessions}
+          assessments={assessments}
+          now={now}
+        />
+      ))}
 
       {recent.length > 0 && (
         <section aria-labelledby="recent-h">

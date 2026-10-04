@@ -1,7 +1,9 @@
 import secrets
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text
+from datetime import date
+
+from sqlalchemy import JSON, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -110,3 +112,22 @@ class Event(Base):
     type: Mapped[str] = mapped_column(String(50), index=True)
     payload: Mapped[dict] = mapped_column(JSON, default=dict)
     ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class Prediction(Base):
+    """One stored model output per user, kind and course per day (the latest of the day wins).
+
+    Kept so predictions can be compared with what actually happened later, which is how the models
+    get evaluated on Padhotec's own students.
+    """
+
+    __tablename__ = "predictions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(30))  # "risk" | "performance"
+    course_id: Mapped[int | None] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"))
+    made_on: Mapped[date] = mapped_column(Date)
+    model_version: Mapped[str] = mapped_column(String(50))
+    value: Mapped[dict] = mapped_column(JSON)
+    features: Mapped[dict | None] = mapped_column(JSON)

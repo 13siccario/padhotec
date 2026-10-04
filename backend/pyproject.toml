@@ -5,10 +5,12 @@ requires-python = ">=3.13"
 dependencies = [
     "email-validator>=2.3.0",
     "fastapi>=0.142.2",
+    "numpy>=2.5.3",
     "psycopg[binary]>=3.3.6",
     "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.15.0",
     "pyjwt>=2.15.1",
+    "scipy>=1.18.1",
     "sqlalchemy>=2",
     "uvicorn[standard]>=0.54.0",
 ]
@@ -16,5 +18,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "pandas>=3.0.6",
     "pytest>=9.1.1",
+    "scikit-learn>=1.9.1",
 ]

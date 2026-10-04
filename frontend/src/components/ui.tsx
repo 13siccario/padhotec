@@ -125,3 +125,24 @@ export function RangeBar({ from, to }: { from: number | null; to: number | null 
     </span>
   );
 }
+
+/** A 0-100% track with the likely range as a band and the best estimate as a dot. */
+export function IntervalBar({ mean, lo, hi, label }: { mean: number; lo: number; hi: number; label: string }) {
+  const pos = (v: number) => `${Math.min(Math.max(v, 0), 1) * 100}%`;
+  return (
+    <span role="img" aria-label={label} className="relative block h-4 w-36">
+      <span className="absolute inset-x-0 top-1/2 h-px bg-rule" />
+      {[0, 25, 50, 75, 100].map((p) => (
+        <span key={p} className="absolute top-1/2 h-2 w-px -translate-y-1/2 bg-rule" style={{ left: `${p}%` }} />
+      ))}
+      <span
+        className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-blue/35"
+        style={{ left: pos(lo), width: `calc(${pos(hi)} - ${pos(lo)})` }}
+      />
+      <span
+        className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue ring-2 ring-paper"
+        style={{ left: pos(mean) }}
+      />
+    </span>
+  );
+}

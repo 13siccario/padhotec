@@ -89,3 +89,60 @@ class AssessmentIn(BaseModel):
 class AssessmentOut(AssessmentIn, ORM):
     id: int
     taken_at: datetime
+
+
+class MasteryOut(BaseModel):
+    mean: float
+    lo: float
+    hi: float
+    evidence: float
+    n_observations: int
+    last_evidence_at: datetime | None
+
+
+class TopicInsight(BaseModel):
+    topic_id: int
+    name: str
+    weight: float
+    mastery: MasteryOut
+
+
+class PerformanceOut(BaseModel):
+    mean: float
+    lo: float
+    hi: float
+    p_pass: float
+    pass_mark: float
+    covered_weight: float
+
+
+class CourseInsight(BaseModel):
+    course_id: int
+    name: str
+    exam_date: datetime | None
+    topics: list[TopicInsight]
+    performance: PerformanceOut | None
+    performance_note: str | None = None
+
+
+class DriverOut(BaseModel):
+    label: str
+    effect: str
+    detail: str
+
+
+class RiskOut(BaseModel):
+    status: str
+    message: str | None = None
+    probability: float | None = None
+    typical: float | None = None
+    level: str | None = None
+    horizon_days: int
+    drivers: list[DriverOut] = []
+    model_version: str | None = None
+
+
+class InsightsOut(BaseModel):
+    generated_at: datetime
+    courses: list[CourseInsight]
+    risk: RiskOut

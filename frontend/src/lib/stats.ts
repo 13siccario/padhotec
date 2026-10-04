@@ -49,8 +49,6 @@ export function lastSevenDays(sessions: StudySession[], now: Date): DayTotal[] {
 export type TopicSummary = {
   topic: Topic;
   minutes14d: number;
-  /** Confidence range from the most recent session that rated it, on the 1-5 self-rating scale. */
-  confidence: { before: number | null; after: number | null } | null;
   /** Fraction (0-1) of the most recent score tied to this topic. */
   lastScore: number | null;
 };
@@ -63,23 +61,23 @@ export function summariseTopics(
 ): TopicSummary[] {
   const since = now.getTime() - 14 * DAY_MS;
   return course.topics.map((topic) => {
-    const mine = sessions
-      .filter((s) => s.topic_id === topic.id)
-      .sort((a, b) => parseDate(b.started_at).getTime() - parseDate(a.started_at).getTime());
-    const rated = mine.find((s) => s.confidence_before !== null || s.confidence_after !== null);
     const lastAssessment = assessments
       .filter((a) => a.topic_id === topic.id)
       .sort((a, b) => parseDate(b.taken_at).getTime() - parseDate(a.taken_at).getTime())[0];
     return {
       topic,
-      minutes14d: mine
-        .filter((s) => parseDate(s.started_at).getTime() >= since)
+      minutes14d: sessions
+        .filter((s) => s.topic_id === topic.id && parseDate(s.started_at).getTime() >= since)
         .reduce((sum, s) => sum + s.minutes, 0),
-      confidence: rated ? { before: rated.confidence_before, after: rated.confidence_after } : null,
       lastScore: lastAssessment ? lastAssessment.score / lastAssessment.max_score : null,
     };
   });
 }
+
+export const pct = (x: number): string => `${Math.round(x * 100)}%`;
+
+/** One decimal below 10%, where whole numbers would hide real differences (2.7% vs 3%). */
+export const pct1 = (x: number): string => (x < 0.1 ? `${(x * 100).toFixed(1)}%` : pct(x));
 
 export function formatMinutes(m: number): string {
   if (m < 60) return `${m} min`;
