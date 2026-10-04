@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.db import Base, engine
-from app.routers import auth, courses, insights, logs, profile
+from app.routers import auth, courses, evaluation, insights, logs, personal, profile
 
 
 @asynccontextmanager
@@ -23,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (auth, profile, courses, logs, insights):
+for module in (auth, profile, courses, logs, insights, personal, evaluation):
     app.include_router(module.router)
 
 

@@ -31,9 +31,15 @@ Backtest on 73,366 OULAD assessments from students never used for tuning (`ml/ba
 | Predict the last score | 0.139 |
 | Average of earlier scores | 0.121 |
 
-The 80% range contained 79.5% of real outcomes. **The honest reading:** the point estimate is no better
-than a plain average of earlier scores. The value is the calibrated range and the sensible handling of
-thin data. The test was on scores within a module, not on topic-level exam results.
+The 80% range contained 79.5% of real outcomes (95% interval 79.1 to 79.9).
+
+Differences in average error against each baseline, with 95% intervals from resampling whole students
+(negative means Padhotec is closer): dataset average **-0.0209** (-0.0221 to -0.0198), last score **-0.0160**
+(-0.0168 to -0.0152), plain average of earlier scores **+0.0020** (+0.0016 to +0.0025).
+
+**The honest reading:** the point estimate is slightly but significantly *worse* than a plain average of earlier
+scores, by 0.2 points out of 100. The value is the calibrated range and the sensible handling of thin data. The
+test was on scores within a module, not on topic-level exam results.
 
 ## 3. Staying on track (dropout risk)
 
@@ -55,6 +61,13 @@ Students are split into train, calibration and test groups, so no student appear
 | Gradient boosting (reference) | 0.743 | 0.069 | 0.0248 | 0.002 |
 
 Trained on 2013 presentations and tested on 2014 ones with no shared students: AUC 0.713.
+
+More rigor, all on held-out students with intervals from resampling whole students:
+- AUC gain over the days-since-last-activity baseline: **+0.062** (0.052 to 0.073).
+- Brier skill against a naive predictor (everyone gets the base rate): **1.6%** (1.4 to 1.9%). Reliably above zero,
+  but small, because stopping is rare.
+- Calibration slope **0.93**, intercept **-0.22**: the probabilities are close to right but slightly high on this
+  split, where students happened to stop less often than in training.
 
 Observed 28-day withdrawal rate by level: low 1.6%, elevated 4.5%, high 6.8%. The levels are the 75th
 and 90th percentiles of held-out predictions.

@@ -89,7 +89,7 @@ def _describe(group: str, f: dict[str, float], effect: str) -> str:
     text = f"{_plural(n, 'score')} logged, averaging {f['mean_score']:.0%}"
     trend = f["score_trend"]
     if abs(trend) >= 0.1:
-        text += f"; latest is {abs(trend):.0%} {'below' if trend < 0 else 'above'} your earlier average"
+        text += f"; latest is {round(abs(trend) * 100)} points {'below' if trend < 0 else 'above'} your earlier average"
     return text
 
 

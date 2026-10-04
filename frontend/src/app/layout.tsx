@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { Schibsted_Grotesk } from "next/font/google";
+import { Funnel_Display, Funnel_Sans, Instrument_Serif } from "next/font/google";
 import { AuthProvider } from "@/lib/auth";
 import "./globals.css";
 
-const grotesk = Schibsted_Grotesk({
-  variable: "--font-grotesk",
-  subsets: ["latin"],
-});
+const sans = Funnel_Sans({ variable: "--font-sans", subsets: ["latin"] });
+const display = Funnel_Display({ variable: "--font-display", subsets: ["latin"] });
+const serif = Instrument_Serif({ variable: "--font-serif", subsets: ["latin"], weight: "400" });
 
 export const metadata: Metadata = {
   title: "Padhotec",
@@ -15,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${grotesk.variable} h-full antialiased`}>
+    <html lang="en" className={`${sans.variable} ${display.variable} ${serif.variable} h-full antialiased`}>
       <body className="min-h-full">
         <AuthProvider>{children}</AuthProvider>
       </body>

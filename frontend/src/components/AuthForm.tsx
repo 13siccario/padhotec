@@ -30,8 +30,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5 rounded-sm border border-rule bg-white p-6">
-      <h2 className="text-2xl font-semibold tracking-tight">{isRegister ? "Create your account" : "Sign in"}</h2>
+    <form onSubmit={submit} className="space-y-5 rounded-[28px] bg-white p-7 shadow-[0_10px_40px_rgba(60,40,20,0.08)] ring-1 ring-black/[0.04]">
+      <h2 className="text-3xl font-normal">{isRegister ? "Create your account" : "Sign in"}</h2>
       <Field label="Email">
         <input
           type="email"
@@ -60,7 +60,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             required
             checked={consent}
             onChange={(e) => setConsent(e.target.checked)}
-            className="mt-1 size-4 accent-blue"
+            className="mt-1 size-4 accent-black"
           />
           <span>
             I agree that Padhotec stores my study logs and scores to calculate my progress. Anything shared with other
@@ -74,7 +74,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       </Button>
       <p className="text-sm text-ink-soft">
         {isRegister ? "Already have an account? " : "New to Padhotec? "}
-        <Link href={isRegister ? "/login" : "/register"} className="text-blue underline">
+        <Link href={isRegister ? "/login" : "/register"} className="font-medium text-ink underline">
           {isRegister ? "Sign in" : "Create an account"}
         </Link>
       </p>

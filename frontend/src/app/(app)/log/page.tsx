@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Button, ErrorNote, Field, PageHeader, SuccessNote, inputCls } from "@/components/ui";
+import { Button, Card, ErrorNote, Field, PageHeader, SuccessNote, inputCls } from "@/components/ui";
 import { api, type Assessment, type Course } from "@/lib/api";
 import { messageOf, useLoad } from "@/lib/hooks";
 
@@ -11,10 +11,10 @@ export default function LogPage() {
   const [tab, setTab] = useState<"session" | "score">("session");
 
   return (
-    <div className="max-w-xl">
+    <div className="max-w-2xl">
       <PageHeader title="Log" lead="Takes under a minute. Regular small entries tell Padhotec more than rare long ones." />
 
-      <div role="tablist" aria-label="What to log" className="mb-6 inline-flex rounded-sm border border-ink">
+      <div role="tablist" aria-label="What to log" className="mb-5 inline-flex rounded-full bg-panel p-1">
         {(
           [
             ["session", "Study session"],
@@ -26,7 +26,9 @@ export default function LogPage() {
             role="tab"
             aria-selected={tab === id}
             onClick={() => setTab(id)}
-            className={`px-4 py-2 text-base ${tab === id ? "bg-ink font-medium text-white" : "bg-white text-ink hover:bg-paper"}`}
+            className={`rounded-full px-5 py-2 text-base transition-colors ${
+              tab === id ? "bg-white font-medium text-ink shadow-sm" : "text-ink-soft hover:text-ink"
+            }`}
           >
             {label}
           </button>
@@ -36,14 +38,18 @@ export default function LogPage() {
       <ErrorNote message={error} />
       {loading && <p className="text-ink-soft">Loading</p>}
       {courses && courses.every((c) => c.topics.length === 0) ? (
-        <p className="text-ink-soft">
-          You need at least one course with a topic before you can log.{" "}
-          <Link href="/courses" className="text-blue underline">
-            Add courses and topics
-          </Link>
-        </p>
+        <Card as="div" className="max-w-xl">
+          <p className="text-lg">
+            You need at least one course with a topic before you can log.{" "}
+            <Link href="/courses" className="font-medium underline">
+              Add courses and topics
+            </Link>
+          </p>
+        </Card>
       ) : (
-        courses && (tab === "session" ? <SessionForm courses={courses} /> : <ScoreForm courses={courses} />)
+        courses && (
+          <Card as="div">{tab === "session" ? <SessionForm courses={courses} /> : <ScoreForm courses={courses} />}</Card>
+        )
       )}
     </div>
   );
@@ -52,7 +58,7 @@ export default function LogPage() {
 function RatingInput({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) {
   return (
     <fieldset>
-      <legend className="mb-1 text-sm font-medium">{label}</legend>
+      <legend className="mb-1.5 text-sm font-medium">{label}</legend>
       <div className="flex gap-2">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
@@ -60,15 +66,15 @@ function RatingInput({ label, value, onChange }: { label: string; value: number 
             key={n}
             aria-pressed={value === n}
             onClick={() => onChange(value === n ? null : n)}
-            className={`size-10 rounded-sm border text-base ${
-              value === n ? "border-blue bg-blue font-medium text-white" : "border-rule bg-white hover:border-ink"
+            className={`size-11 rounded-full border text-base transition-colors ${
+              value === n ? "border-ink bg-ink font-medium text-white" : "border-line bg-white hover:border-ink"
             }`}
           >
             {n}
           </button>
         ))}
       </div>
-      <p className="mt-1 text-sm text-ink-soft">1 is lost, 5 is confident. Optional.</p>
+      <p className="mt-1.5 text-sm text-ink-soft">1 is lost, 5 is confident. Optional.</p>
     </fieldset>
   );
 }
@@ -108,7 +114,7 @@ function SessionForm({ courses }: { courses: Course[] }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5">
+    <form onSubmit={submit} className="space-y-6">
       <Field label="Topic">
         <select value={topicId} onChange={(e) => setTopicId(Number(e.target.value))} className={inputCls}>
           {courses
@@ -132,15 +138,15 @@ function SessionForm({ courses }: { courses: Course[] }) {
           max={720}
           value={minutes}
           onChange={(e) => setMinutes(e.target.value)}
-          className={`${inputCls} w-32`}
+          className={`${inputCls} w-36`}
         />
-        <span className="mt-2 flex gap-2">
+        <span className="mt-2.5 flex gap-2">
           {[15, 30, 45, 60].map((m) => (
             <button
               type="button"
               key={m}
               onClick={() => setMinutes(String(m))}
-              className="rounded-sm border border-rule bg-white px-3 py-1 text-sm hover:border-ink"
+              className="rounded-full border border-line bg-white px-4 py-1.5 text-sm hover:border-ink"
             >
               {m}
             </button>
@@ -199,7 +205,7 @@ function ScoreForm({ courses }: { courses: Course[] }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5">
+    <form onSubmit={submit} className="space-y-6">
       <Field label="Course">
         <select
           value={courseId}
@@ -252,10 +258,10 @@ function ScoreForm({ courses }: { courses: Course[] }) {
             step="any"
             value={score}
             onChange={(e) => setScore(e.target.value)}
-            className={`${inputCls} w-28`}
+            className={`${inputCls} w-32`}
           />
         </Field>
-        <span className="pb-2 text-ink-soft">out of</span>
+        <span className="pb-3 text-ink-soft">out of</span>
         <Field label="Maximum">
           <input
             type="number"
@@ -264,7 +270,7 @@ function ScoreForm({ courses }: { courses: Course[] }) {
             step="any"
             value={max}
             onChange={(e) => setMax(e.target.value)}
-            className={`${inputCls} w-28`}
+            className={`${inputCls} w-32`}
           />
         </Field>
       </div>

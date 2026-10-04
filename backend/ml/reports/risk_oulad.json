@@ -103,6 +103,25 @@
       "rows": 153169,
       "positives": 3975
     },
+    "extra": {
+      "naive_baseline_probability": 0.02758481017068741,
+      "brier_skill_vs_naive": {
+        "value": 0.016187507212364505,
+        "ci95": [
+          0.014003385599225374,
+          0.018547839008338108
+        ]
+      },
+      "auc_gain_vs_inactivity_gap": {
+        "value": 0.06185611355878462,
+        "ci95": [
+          0.05185945712334506,
+          0.07332668566726945
+        ]
+      },
+      "calibration_slope": 0.9288380768024032,
+      "calibration_intercept": -0.21933168850145005
+    },
     "level_bands": {
       "low": {
         "observed_rate": 0.015740642374021743,

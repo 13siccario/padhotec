@@ -21,6 +21,25 @@ npm run dev   # http://localhost:3000
 
 The app talks to the API at `http://localhost:8000`. Set `NEXT_PUBLIC_API_URL` to change that.
 
+## Demo
+
+A synthetic cohort fills the screens for demonstrations. Use a separate database so it never mixes with yours:
+
+```sh
+cd backend
+PADHOTEC_DATABASE_URL=sqlite:///./demo.db uv run python scripts/seed_demo.py --yes
+PADHOTEC_DATABASE_URL=sqlite:///./demo.db uv run uvicorn app.main:app
+```
+
+Demo accounts are marked, excluded from every statistic, and never shown to real students as peers. The
+script `--reset` and `--remove` options only ever delete demo accounts. See [docs/DEMO.md](docs/DEMO.md) for the
+walkthrough.
+
+## Evidence
+
+`/evaluation` (no sign-in needed) shows how each model was tested, with intervals, baselines and limitations.
+It also compares stored predictions with real outcomes once enough have resolved.
+
 ## Models
 
 The risk model and its backtests need the OULAD dataset (CC BY 4.0) in `backend/ml/data/oulad/`. It is not

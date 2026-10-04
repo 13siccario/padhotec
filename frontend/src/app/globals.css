@@ -1,45 +1,159 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #f4f6fa;
-  --grid: #dce2ec;
-  --ink: #0f1b33;
-  --ink-soft: #4a5775;
-  --rule: #c9d1e0;
-  --blue: #2536e8;
-  --blue-deep: #1a27b8;
-  --green: #12805c;
-  --amber: #8f5400;
-  --red: #b3261e;
+  /* Warm blush canvas, white cards, black actions, soft colour used for identity. */
+  --canvas: #f5f1ef;
+  --panel: #eee9e5;
+  --sunken: #e7e1da;
+  --surface: #ffffff;
+  --line: #e4ddd7;
+  --ink: #111111;
+  --ink-soft: #5f5953;
+  --ink-mute: #8e8882; /* large text only */
+  --yellow: #f3e04a;
+  --sticky: #fbf2a6;
+  --lilac: #ddccf3;
+  --blush: #f7d9de;
+  --sky: #d1e6f6;
+  --peach: #fad9c7;
+  --mint: #d9eed7;
+  --ok: #3f6b0e;
+  --ok-bar: #7ca82e;
+  --bad: #b8281a;
+  --warn: #8a4b00;
 }
 
 @theme inline {
-  --color-paper: var(--paper);
-  --color-grid: var(--grid);
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-sunken: var(--sunken);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
-  --color-rule: var(--rule);
-  --color-blue: var(--blue);
-  --color-blue-deep: var(--blue-deep);
-  --color-green: var(--green);
-  --color-amber: var(--amber);
-  --color-red: var(--red);
-  --font-sans: var(--font-grotesk), system-ui, sans-serif;
+  --color-ink-mute: var(--ink-mute);
+  --color-yellow: var(--yellow);
+  --color-sticky: var(--sticky);
+  --color-lilac: var(--lilac);
+  --color-blush: var(--blush);
+  --color-sky: var(--sky);
+  --color-peach: var(--peach);
+  --color-mint: var(--mint);
+  --color-ok: var(--ok);
+  --color-bad: var(--bad);
+  --color-warn: var(--warn);
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --font-display: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  --font-serif: var(--font-serif), Georgia, serif;
 }
 
 body {
   color: var(--ink);
-  font-family: var(--font-grotesk), system-ui, sans-serif;
-  background-color: var(--paper);
-  /* Graph paper: the one decorative device in the app. */
+  font-family: var(--font-sans), system-ui, sans-serif;
+  background-color: #efe9e6;
+  /* A faint wash of the same colours the tiles use, fixed behind the app frame. */
   background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 28px 28px;
+    radial-gradient(55% 45% at 8% 8%, rgba(190, 215, 245, 0.55), transparent 70%),
+    radial-gradient(50% 45% at 95% 12%, rgba(247, 226, 120, 0.45), transparent 70%),
+    radial-gradient(50% 50% at 85% 95%, rgba(240, 190, 200, 0.4), transparent 70%);
   background-attachment: fixed;
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
 :focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* ---- Mesh gradients: the identity of a course, the way Dafi uses colour for subjects ---------------- */
+
+.mesh {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Fine grain over the colour, so gradients look printed and not digital. */
+.mesh::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.3;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Keeps white text legible on any of the gradients. */
+.scrim::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0.18) 45%, transparent 70%);
+}
+
+.mesh-0 {
+  background-color: #f7ecab;
+  background-image: radial-gradient(60% 70% at 18% 35%, #f1d12e, transparent 72%),
+    radial-gradient(60% 60% at 88% 70%, #e4c8f0, transparent 72%),
+    radial-gradient(40% 40% at 60% 10%, #ffffff, transparent 70%);
+}
+.mesh-1 {
+  background-color: #cfe3f5;
+  background-image: radial-gradient(70% 60% at 88% 88%, #1d5aa6, transparent 72%),
+    radial-gradient(60% 50% at 25% 15%, #ffffff, transparent 70%),
+    radial-gradient(50% 50% at 70% 50%, #6aa2d8, transparent 72%);
+}
+.mesh-2 {
+  background-color: #f6a56b;
+  background-image: radial-gradient(60% 60% at 12% 30%, #ee6a3c, transparent 72%),
+    radial-gradient(55% 55% at 90% 15%, #f9d37d, transparent 72%),
+    radial-gradient(50% 50% at 25% 95%, #d4502a, transparent 72%);
+}
+.mesh-3 {
+  background-color: #f3d3d8;
+  background-image: radial-gradient(55% 55% at 15% 20%, #c4607a, transparent 72%),
+    radial-gradient(45% 45% at 50% 55%, #ffffff, transparent 72%),
+    radial-gradient(55% 55% at 88% 65%, #d6808f, transparent 72%);
+}
+.mesh-4 {
+  background-color: #b99edc;
+  background-image: radial-gradient(55% 60% at 12% 58%, #e8b616, transparent 72%),
+    radial-gradient(60% 55% at 88% 18%, #a98fdb, transparent 72%),
+    radial-gradient(50% 50% at 85% 90%, #7a5db6, transparent 72%);
+}
+.mesh-5 {
+  background-color: #cfe6ce;
+  background-image: radial-gradient(60% 60% at 82% 82%, #5a9a50, transparent 72%),
+    radial-gradient(55% 50% at 15% 18%, #f5f0ae, transparent 72%),
+    radial-gradient(45% 45% at 50% 50%, #8dc388, transparent 72%);
+}
+.mesh-6 {
+  background-color: #ead9c8;
+  background-image: radial-gradient(55% 55% at 40% 30%, #c19670, transparent 72%),
+    radial-gradient(45% 45% at 82% 14%, #ffffff, transparent 72%),
+    radial-gradient(55% 55% at 20% 88%, #e6b698, transparent 72%);
+}
+.mesh-7 {
+  background-color: #cdeced;
+  background-image: radial-gradient(60% 60% at 86% 76%, #2b8c98, transparent 72%),
+    radial-gradient(55% 50% at 24% 24%, #ffffff, transparent 72%),
+    radial-gradient(45% 45% at 10% 92%, #f4e078, transparent 72%);
+}
+/* A softer wash for large backgrounds (sign-in) */
+.mesh-soft {
+  background-color: #f6f2f0;
+  background-image: radial-gradient(45% 50% at 22% 62%, rgba(242, 214, 60, 0.75), transparent 70%),
+    radial-gradient(45% 45% at 70% 40%, rgba(236, 200, 232, 0.8), transparent 70%),
+    radial-gradient(40% 40% at 25% 25%, rgba(200, 225, 245, 0.8), transparent 70%),
+    radial-gradient(40% 40% at 85% 85%, rgba(250, 210, 160, 0.6), transparent 70%);
 }

@@ -62,6 +62,22 @@ def _topic_evidence(
     return items
 
 
+def load_user_data(db: Session, user: User):
+    courses = db.scalars(select(Course).where(Course.user_id == user.id).order_by(Course.id)).all()
+    sessions = db.scalars(select(StudySession).where(StudySession.user_id == user.id)).all()
+    assessments = db.scalars(select(Assessment).where(Assessment.user_id == user.id)).all()
+    return list(courses), list(sessions), list(assessments)
+
+
+def topic_masteries(courses, sessions, assessments, now: datetime) -> dict[int, mastery_model.Mastery]:
+    """Mastery for every topic the student has, keyed by topic id."""
+    return {
+        topic.id: mastery_model.estimate(_topic_evidence(course, topic.id, assessments, sessions), now)
+        for course in courses
+        for topic in course.topics
+    }
+
+
 def _risk_inputs(sessions: list[StudySession], assessments: list[Assessment], today: date):
     """Daily minutes from the first session to today, and score events as (day index, fraction)."""
     dated = [(as_utc(s.started_at).date(), s.minutes) for s in sessions if as_utc(s.started_at).date() <= today]
@@ -99,15 +115,14 @@ def _save_snapshot(db: Session, user: User, kind: str, course_id: int | None, to
 def compute_insights(db: Session, user: User, now: datetime | None = None, pass_mark: float = 0.5) -> InsightsOut:
     now = now or datetime.now(UTC)
     today = now.date()
-    courses = db.scalars(select(Course).where(Course.user_id == user.id).order_by(Course.id)).all()
-    sessions = db.scalars(select(StudySession).where(StudySession.user_id == user.id)).all()
-    assessments = db.scalars(select(Assessment).where(Assessment.user_id == user.id)).all()
+    courses, sessions, assessments = load_user_data(db, user)
+    masteries = topic_masteries(courses, sessions, assessments, now)
 
     course_out = []
     for course in courses:
         topics_out, posteriors = [], []
         for topic in course.topics:
-            m = mastery_model.estimate(_topic_evidence(course, topic.id, assessments, sessions), now)
+            m = masteries[topic.id]
             posteriors.append(TopicPosterior(topic.weight, m.a, m.b, m.evidence))
             topics_out.append(
                 TopicInsight(
@@ -139,7 +154,7 @@ def compute_insights(db: Session, user: User, now: datetime | None = None, pass_
             )
         )
 
-    daily, scores = _risk_inputs(list(sessions), list(assessments), today)
+    daily, scores = _risk_inputs(sessions, assessments, today)
     risk = risk_model.assess(daily, scores)
     if risk.status == "ok":
         _save_snapshot(

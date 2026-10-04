@@ -1,6 +1,6 @@
 {
   "version": "risk-oulad-v1",
-  "trained_at": "2026-10-04T08:08:11+00:00",
+  "trained_at": "2026-10-04T10:21:16+00:00",
   "target": "withdrawal from the module within 28 days of the landmark",
   "features": [
     "days_since_last_activity",

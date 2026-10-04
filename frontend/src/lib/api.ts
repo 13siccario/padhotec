@@ -86,7 +86,7 @@ async function request<T>(path: string, init: RequestInit & { json?: unknown } =
   return body as T;
 }
 
-export type Topic = { id: number; course_id: number; name: string; weight: number };
+export type Topic = { id: number; course_id: number; name: string; weight: number; skill_key: string | null };
 export type Course = { id: number; name: string; exam_date: string | null; topics: Topic[] };
 export type StudySession = {
   id: number;
@@ -152,12 +152,122 @@ export type Risk = {
 };
 export type Insights = { generated_at: string; courses: CourseInsight[]; risk: Risk };
 
+export type PlanBlock = {
+  topic_id: number;
+  topic_name: string;
+  course_id: number;
+  course_name: string;
+  minutes: number;
+  kind: "diagnose" | "practice";
+  reason: string;
+};
+export type Plan = {
+  budget_minutes: number;
+  studied_today: number;
+  remaining: number;
+  headline: string;
+  note: string;
+  blocks: PlanBlock[];
+};
+export type Skill = {
+  key: string;
+  label: string;
+  rating: number | null;
+  level: { mean: number; lo: number; hi: number } | null;
+  topics: string[];
+};
+export type Career = {
+  key: string;
+  label: string;
+  summary: string;
+  readiness_mean: number;
+  readiness_lo: number;
+  readiness_hi: number;
+  unrated: number;
+  total: number;
+  gaps: { skill: string; label: string; required: number; current: number | null; importance: number }[];
+  roadmap: {
+    skill: string;
+    label: string;
+    current: number | null;
+    target: number;
+    reason: string;
+    your_topics: string[];
+  }[];
+};
+export type Careers = { note: string; rated_skills: number; total_skills: number; careers: Career[] };
+export type PeerMetric = {
+  key: string;
+  label: string;
+  unit: string;
+  you: number | null;
+  p25: number;
+  median: number;
+  p75: number;
+  position: string | null;
+};
+export type Peers = {
+  status: "ok" | "opted_out";
+  level: string | null;
+  label: string | null;
+  cohort_size: number | null;
+  metrics: PeerMetric[];
+  common_topics: { course: string; topic: string; peers_tracking: number; cohort_size: number }[];
+  note: string | null;
+};
+
+type Estimate = { value: number; ci95: [number, number] | null };
+
+export type Evaluation = {
+  available: boolean;
+  source: string;
+  limitations: string[];
+  risk: {
+    target: string;
+    dataset: { dataset: string; rows: number; students: number };
+    headline: {
+      roc_auc: Estimate;
+      pr_auc: number;
+      base_rate: number;
+      brier: number;
+      brier_skill_vs_naive: Estimate | null;
+      calibration_error: number;
+      calibration_slope: number | null;
+      calibration_intercept: number | null;
+      top_decile_capture: number | null;
+      rows_tested: number;
+    };
+    models: { key: string; label: string; roc_auc: number; pr_auc: number }[];
+    auc_gain_vs_inactivity_gap: Estimate | null;
+    out_of_time: { train: string; test: string; roc_auc: number; brier: number; rows: number };
+    calibration: { predicted: number; observed: number; n: number }[];
+    level_bands: Record<"low" | "elevated" | "high", { observed_rate: number; n: number }>;
+  } | null;
+  performance: {
+    n: number;
+    defaults: { half_life_days: number; noise_sd: number };
+    mae: { key: string; label: string; value: number }[];
+    mae_diffs: { vs_global_mean: Estimate | null; vs_last_score: Estimate | null; vs_mean_of_earlier: Estimate | null };
+    coverage: { nominal: number; value: number; ci95: [number, number] | null; mean_width: number };
+    half_life_curve: { days: number; mae: number }[];
+    noise_curve: { sd: number; coverage: number }[];
+    coverage_by_earlier_scores: { k: number; coverage: number; n: number }[];
+  } | null;
+  live: {
+    real_students: number;
+    note: string;
+    risk: { snapshots: number; resolved: number; needed: number; stopped_rate: number | null; mean_predicted: number | null };
+    performance: { snapshots: number; resolved: number; needed: number; coverage: number | null; mean_abs_error: number | null };
+  };
+};
+
 export const api = {
   register: (email: string, password: string, consent: boolean) =>
     request<{ access_token: string }>("/auth/register", { method: "POST", json: { email, password, consent } }),
   login: (email: string, password: string) =>
     request<{ access_token: string }>("/auth/login", { method: "POST", json: { email, password } }),
-  me: () => request<{ id: number; email: string }>("/auth/me"),
+  me: () => request<{ id: number; email: string; is_demo: boolean }>("/auth/me"),
+  evaluation: () => request<Evaluation>("/evaluation"),
   deleteAccount: () => request<void>("/auth/me", { method: "DELETE" }),
 
   profile: () => request<Profile>("/profile"),
@@ -170,6 +280,23 @@ export const api = {
   addTopic: (courseId: number, name: string, weight: number) =>
     request<Topic>(`/courses/${courseId}/topics`, { method: "POST", json: { name, weight } }),
   deleteTopic: (id: number) => request<void>(`/courses/topics/${id}`, { method: "DELETE" }),
+
+  plan: (minutes: number | null) => {
+    const offset = -new Date().getTimezoneOffset(); // minutes east of UTC, so "today" matches the student's clock
+    const q = new URLSearchParams({ utc_offset_minutes: String(offset) });
+    if (minutes !== null) q.set("minutes", String(minutes));
+    return request<Plan>(`/plan?${q}`);
+  },
+  skills: () => request<Skill[]>("/skills"),
+  rateSkill: (key: string, rating: number | null) =>
+    request<Skill[]>(`/skills/${key}`, { method: "PUT", json: { rating } }),
+  tagTopicSkill: (topicId: number, skillKey: string | null) =>
+    request<Topic>(`/courses/topics/${topicId}/skill`, { method: "PUT", json: { skill_key: skillKey } }),
+  careers: () => request<Careers>("/careers"),
+  peers: () => request<Peers>("/peers"),
+  privacy: () => request<{ peer_stats_opt_out: boolean }>("/privacy"),
+  setPrivacy: (optOut: boolean) =>
+    request<{ peer_stats_opt_out: boolean }>("/privacy", { method: "PUT", json: { peer_stats_opt_out: optOut } }),
 
   insights: () => request<Insights>("/insights"),
 

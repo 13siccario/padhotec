@@ -66,6 +66,20 @@ def interval(a, b, noise_sd, rng, mass=0.8):
     return lo, hi
 
 
+def grouped_bootstrap(students, stat, rng, n=300):
+    """Point estimate and 95% interval, resampling whole students so one student's rows stay together."""
+    order = np.argsort(students, kind="stable")
+    uniq, start = np.unique(students[order], return_index=True)
+    ends = np.append(start[1:], len(order))
+    point = float(stat(np.arange(len(students))))
+    vals = []
+    for _ in range(n):
+        pick = rng.integers(0, len(uniq), len(uniq))
+        idx = order[np.concatenate([np.arange(start[i], ends[i]) for i in pick])]
+        vals.append(float(stat(idx)))
+    return {"value": point, "ci95": [float(np.percentile(vals, 2.5)), float(np.percentile(vals, 97.5))]}
+
+
 def main():
     rng = np.random.default_rng(SEED)
     df = load_sequences()
@@ -100,21 +114,32 @@ def main():
         print(f"  noise sd {sd:.2f}: tuning-half 80% interval coverage {coverage_by_noise[sd]:.3f}")
     best_sd = min(coverage_by_noise, key=lambda s: abs(coverage_by_noise[s] - 0.8))
 
-    def evaluate(aa, bb, sd, mask):
+    def evaluate(aa, bb, sd, mask, ci=True):
         mean = aa[mask] / (aa[mask] + bb[mask])
         lo, hi = interval(aa[mask], bb[mask], sd, rng)
         yy = y[mask]
         prev_mean = (df.groupby(KEY)["fraction"].transform(lambda s: s.shift().expanding().mean())).to_numpy()[mask]
         last = (df.groupby(KEY)["fraction"].shift()).to_numpy()[mask]
-        return {
+        err_model, err_prev = np.abs(mean - yy), np.abs(prev_mean - yy)
+        err_global, err_last = np.abs(0.758 - yy), np.abs(last - yy)
+        covered = ((yy >= lo) & (yy <= hi)).astype(float)
+        out = {
             "n": int(mask.sum()),
-            "mae_model": float(np.abs(mean - yy).mean()),
-            "mae_baseline_global_mean": float(np.abs(0.758 - yy).mean()),
-            "mae_baseline_last_score": float(np.abs(last - yy).mean()),
-            "mae_baseline_mean_of_earlier": float(np.abs(prev_mean - yy).mean()),
-            "interval_80_coverage": float(((yy >= lo) & (yy <= hi)).mean()),
+            "mae_model": float(err_model.mean()),
+            "mae_baseline_global_mean": float(err_global.mean()),
+            "mae_baseline_last_score": float(err_last.mean()),
+            "mae_baseline_mean_of_earlier": float(err_prev.mean()),
+            "interval_80_coverage": float(covered.mean()),
             "interval_80_mean_width": float((hi - lo).mean()),
         }
+        if ci:
+            sid = df["id_student"].to_numpy()[mask]
+            # Differences are model minus baseline, so negative means the model is better.
+            out["interval_80_coverage_ci"] = grouped_bootstrap(sid, lambda i: covered[i].mean(), rng)
+            out["mae_diff_vs_global_mean"] = grouped_bootstrap(sid, lambda i: err_model[i].mean() - err_global[i].mean(), rng)
+            out["mae_diff_vs_last_score"] = grouped_bootstrap(sid, lambda i: err_model[i].mean() - err_last[i].mean(), rng)
+            out["mae_diff_vs_mean_of_earlier"] = grouped_bootstrap(sid, lambda i: err_model[i].mean() - err_prev[i].mean(), rng)
+        return out
 
     report = {
         "half_life_mae_on_tuning_half": {str(k): v for k, v in results.items()},
@@ -125,7 +150,7 @@ def main():
         "test_half_app_defaults": evaluate(a, b, EXAM_NOISE_SD, test),
         "test_half_best_half_life_and_calibrated_noise": evaluate(a_best, b_best, best_sd, test),
         "test_half_by_number_of_earlier_scores": {
-            str(k): evaluate(a, b, EXAM_NOISE_SD, test & (df.k.to_numpy() == k)) for k in (1, 2, 3, 5)
+            str(k): evaluate(a, b, EXAM_NOISE_SD, test & (df.k.to_numpy() == k), ci=False) for k in (1, 2, 3, 5)
         },
     }
     REPORT.parent.mkdir(parents=True, exist_ok=True)
@@ -135,6 +160,11 @@ def main():
         print(name)
         for k, v in report[name].items():
             print(f"   {k:34s} {v:.4f}" if isinstance(v, float) else f"   {k:34s} {v}")
+    app = report["test_half_app_defaults"]
+    print("\nwith 95% intervals (students resampled):")
+    print("  coverage of the 80% range:", app["interval_80_coverage_ci"])
+    for k in ("mae_diff_vs_global_mean", "mae_diff_vs_last_score", "mae_diff_vs_mean_of_earlier"):
+        print(f"  {k}:", app[k])
     print("coverage by number of earlier scores:",
           {k: round(v["interval_80_coverage"], 3) for k, v in report["test_half_by_number_of_earlier_scores"].items()})
 

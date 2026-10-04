@@ -1,0 +1,9 @@
+{
+  "metric": "active_days_per_week",
+  "p25": 0.5,
+  "p50": 1.5,
+  "p75": 3.0,
+  "rows": 766337,
+  "students": 24895,
+  "source": "OULAD (CC BY 4.0), Kuzilek, Hlosta and Zdrahal, 2017"
+}

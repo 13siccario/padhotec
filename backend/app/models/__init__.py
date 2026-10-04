@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 from datetime import date
 
-from sqlalchemy import JSON, Date, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -28,12 +28,28 @@ class User(Base):
     consented_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
+    demo_link: Mapped["DemoAccount | None"] = relationship(
+        cascade="all, delete-orphan", uselist=False, passive_deletes=True
+    )
     profile: Mapped["StudentProfile | None"] = relationship(
         back_populates="user", cascade="all, delete-orphan", uselist=False
     )
     courses: Mapped[list["Course"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     sessions: Mapped[list["StudySession"]] = relationship(cascade="all, delete-orphan")
     assessments: Mapped[list["Assessment"]] = relationship(cascade="all, delete-orphan")
+
+
+    @property
+    def is_demo(self) -> bool:
+        return self.demo_link is not None
+
+
+class DemoAccount(Base):
+    """Marks an account whose data is synthetic. Such accounts never mix with real students' statistics."""
+
+    __tablename__ = "demo_accounts"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
 
 
 class StudentProfile(Base):
@@ -73,6 +89,22 @@ class Topic(Base):
     weight: Mapped[float] = mapped_column(Float, default=1.0)
 
     course: Mapped[Course] = relationship(back_populates="topics")
+    skill_link: Mapped["TopicSkill | None"] = relationship(
+        cascade="all, delete-orphan", uselist=False, passive_deletes=True
+    )
+
+    @property
+    def skill_key(self) -> str | None:
+        return self.skill_link.skill_key if self.skill_link else None
+
+
+class TopicSkill(Base):
+    """Which career skill a topic builds. A separate table so existing databases need no migration."""
+
+    __tablename__ = "topic_skills"
+
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), primary_key=True)
+    skill_key: Mapped[str] = mapped_column(String(50))
 
 
 class StudySession(Base):
@@ -131,3 +163,34 @@ class Prediction(Base):
     model_version: Mapped[str] = mapped_column(String(50))
     value: Mapped[dict] = mapped_column(JSON)
     features: Mapped[dict | None] = mapped_column(JSON)
+
+
+class StudentSkill(Base):
+    """A self-rating (1-5) of one skill from the career catalogue."""
+
+    __tablename__ = "student_skills"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    skill_key: Mapped[str] = mapped_column(String(50), primary_key=True)
+    rating: Mapped[int] = mapped_column(Integer)
+
+
+class Recommendation(Base):
+    """The first plan offered each day, kept as offered so acceptance can be measured later."""
+
+    __tablename__ = "recommendations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(30))
+    made_on: Mapped[date] = mapped_column(Date)
+    model_version: Mapped[str] = mapped_column(String(50))
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class PrivacySetting(Base):
+    __tablename__ = "privacy_settings"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    # Opting out removes you from other students' peer statistics, and hides peer statistics from you.
+    peer_stats_opt_out: Mapped[bool] = mapped_column(Boolean, default=False)

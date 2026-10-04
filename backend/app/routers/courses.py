@@ -1,9 +1,10 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from app.deps import DB, CurrentUser, owned_course, owned_topic
-from app.models import Course, Topic
-from app.schemas import CourseIn, CourseOut, TopicIn, TopicOut
+from app.models import Course, Topic, TopicSkill
+from app.schemas import CourseIn, CourseOut, TopicIn, TopicOut, TopicSkillIn
+from app.services.careers import skills_by_key
 from app.services.events import COURSE_ADDED, record_event
 
 router = APIRouter(prefix="/courses", tags=["courses"])
@@ -60,3 +61,22 @@ def update_topic(topic_id: int, body: TopicIn, user: CurrentUser, db: DB):
 def delete_topic(topic_id: int, user: CurrentUser, db: DB):
     db.delete(owned_topic(db, user, topic_id))
     db.commit()
+
+
+@router.put("/topics/{topic_id}/skill", response_model=TopicOut)
+def tag_topic_skill(topic_id: int, body: TopicSkillIn, user: CurrentUser, db: DB):
+    """Say which career skill a topic builds, so its results count toward that skill. Null clears it."""
+    topic = owned_topic(db, user, topic_id)
+    if body.skill_key is not None and body.skill_key not in skills_by_key():
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Unknown skill")
+    link = db.get(TopicSkill, topic.id)
+    if body.skill_key is None:
+        if link:
+            db.delete(link)
+    elif link:
+        link.skill_key = body.skill_key
+    else:
+        db.add(TopicSkill(topic_id=topic.id, skill_key=body.skill_key))
+    db.commit()
+    db.refresh(topic)
+    return topic

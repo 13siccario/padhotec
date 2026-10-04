@@ -18,8 +18,8 @@ for real use by classmates. Federated learning comes after v1, once there are se
 | 1 | Foundation | FastAPI backend, auth with consent and rate limiting, data model, event log, delete-my-data | Done |
 | 2 | Frontend and logging | Next.js app: sign up, courses and topics, log sessions and scores, dashboard | Done |
 | 3 | Intelligence | Mastery (Beta posterior with forgetting decay), performance prediction, dropout risk (OULAD, calibrated). See [MODELS.md](MODELS.md) | Done |
-| 4 | Personalization | Study planner, career skill-gap, peer insights | Next |
-| 5 | Evaluation and demo | Calibration and backtest page, labelled synthetic seed data, demo script | |
+| 4 | Personalization | Study planner, career skill-gap, peer insights. See [PERSONALIZATION.md](PERSONALIZATION.md) | Done |
+| 5 | Evaluation and demo | Public evidence page, live check against real outcomes, labelled synthetic demo cohort, demo script. See [DEMO.md](DEMO.md) | Done |
 
 ## Methods
 - Mastery: Beta posterior per topic, shrunk toward the prior between observations (half-life = forgetting).

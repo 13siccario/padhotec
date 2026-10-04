@@ -27,6 +27,7 @@ class UserOut(ORM):
     id: int
     email: EmailStr
     consented_at: datetime | None
+    is_demo: bool = False
 
 
 class ProfileIn(BaseModel):
@@ -51,6 +52,7 @@ class TopicIn(BaseModel):
 class TopicOut(TopicIn, ORM):
     id: int
     course_id: int
+    skill_key: str | None = None
 
 
 class CourseIn(BaseModel):
@@ -146,3 +148,113 @@ class InsightsOut(BaseModel):
     generated_at: datetime
     courses: list[CourseInsight]
     risk: RiskOut
+
+
+class PlanBlockOut(BaseModel):
+    topic_id: int
+    topic_name: str
+    course_id: int
+    course_name: str
+    minutes: int
+    kind: str
+    reason: str
+
+
+class PlanOut(BaseModel):
+    budget_minutes: int
+    studied_today: int
+    remaining: int
+    headline: str
+    note: str
+    blocks: list[PlanBlockOut]
+
+
+class SkillRatingIn(BaseModel):
+    rating: int | None = Field(ge=1, le=5)
+
+
+class TopicSkillIn(BaseModel):
+    skill_key: str | None = Field(default=None, max_length=50)
+
+
+class SkillLevelOut(BaseModel):
+    mean: float
+    lo: float
+    hi: float
+
+
+class SkillOut(BaseModel):
+    key: str
+    label: str
+    rating: int | None
+    level: SkillLevelOut | None
+    topics: list[str]
+
+
+class GapOut(BaseModel):
+    skill: str
+    label: str
+    required: float
+    current: float | None
+    importance: int
+
+
+class RoadmapStepOut(BaseModel):
+    skill: str
+    label: str
+    current: float | None
+    target: float
+    reason: str
+    your_topics: list[str]
+
+
+class CareerOut(BaseModel):
+    key: str
+    label: str
+    summary: str
+    readiness_mean: float
+    readiness_lo: float
+    readiness_hi: float
+    unrated: int
+    total: int
+    gaps: list[GapOut]
+    roadmap: list[RoadmapStepOut]
+
+
+class CareersOut(BaseModel):
+    note: str
+    rated_skills: int
+    total_skills: int
+    careers: list[CareerOut]
+
+
+class PeerMetricOut(BaseModel):
+    key: str
+    label: str
+    unit: str
+    you: float | None
+    p25: float
+    median: float
+    p75: float
+    position: str | None
+
+
+class TopicSuggestionOut(BaseModel):
+    course: str
+    topic: str
+    peers_tracking: int
+    cohort_size: int
+
+
+class PeerOut(BaseModel):
+    status: str
+    level: str | None = None
+    label: str | None = None
+    cohort_size: int | None = None
+    metrics: list[PeerMetricOut] = []
+    common_topics: list[TopicSuggestionOut] = []
+    note: str | None = None
+
+
+class PrivacyIO(BaseModel):
+    peer_stats_opt_out: bool

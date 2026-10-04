@@ -196,6 +196,24 @@ def bootstrap_ci(y, p, students, rng, n=200):
     return [float(np.percentile(vals, 2.5)), float(np.percentile(vals, 97.5))]
 
 
+def grouped_bootstrap(students, stat, rng, n=200):
+    """Point estimate and 95% interval for stat(row_indices), resampling whole students so correlated
+    rows from one student stay together."""
+    order = np.argsort(students, kind="stable")
+    uniq, start = np.unique(students[order], return_index=True)
+    ends = np.append(start[1:], len(order))
+    point = float(stat(np.arange(len(students))))
+    vals = []
+    for _ in range(n):
+        pick = rng.integers(0, len(uniq), len(uniq))
+        idx = order[np.concatenate([np.arange(start[i], ends[i]) for i in pick])]
+        try:
+            vals.append(float(stat(idx)))
+        except ValueError:  # a resample with a single class has no AUC
+            continue
+    return {"value": point, "ci95": [float(np.percentile(vals, 2.5)), float(np.percentile(vals, 97.5))]}
+
+
 def evaluate_split(X, y, masks, rng, label):
     """Fit on masks['train'], calibrate on masks['calib'], report on masks['test']."""
     log(f"[{label}] train/calib/test rows: {masks['train'].sum()}/{masks['calib'].sum()}/{masks['test'].sum()}")
@@ -218,11 +236,14 @@ def evaluate_split(X, y, masks, rng, label):
 
     for name, cols in (("baseline_week_only", week_cols), ("baseline_inactivity_gap", gap_cols)):
         s, m = fit_logistic(X[masks["train"]], y[masks["train"]], cols)
-        out[name] = metrics(yt, m.predict_proba(s.transform(X[masks["test"]][:, cols]))[:, 1])
+        pred = m.predict_proba(s.transform(X[masks["test"]][:, cols]))[:, 1]
+        out[name] = metrics(yt, pred)
+        if name == "baseline_inactivity_gap":
+            gap_pred = pred
 
     gb = HistGradientBoostingClassifier(random_state=SEED).fit(X[masks["train"]][:, all_cols], y[masks["train"]])
     out["reference_gradient_boosting"] = metrics(yt, gb.predict_proba(X[masks["test"]][:, all_cols])[:, 1])
-    return out, scaler, model, iso, test_cal
+    return out, scaler, model, iso, test_cal, {"gap_pred": gap_pred}
 
 
 def main():
@@ -235,9 +256,25 @@ def main():
     log(f"dataset: {len(y)} rows, {len(np.unique(student))} students, base rate {y.mean():.4f}")
 
     masks = split_students(student, rng)
-    primary, scaler, model, iso, test_cal = evaluate_split(X, y, masks, rng, "student-grouped split")
+    primary, scaler, model, iso, test_cal, extras = evaluate_split(X, y, masks, rng, "student-grouped split")
     yt, st = y[masks["test"]], student[masks["test"]]
     primary["padhotec_model_calibrated"]["roc_auc_95ci"] = bootstrap_ci(yt, test_cal, st, rng)
+
+    # Extra rigor: skill against a naive baseline, gain over the simple baseline, and calibration slope.
+    p0 = float(y[masks["train"]].mean())  # the naive predictor: everyone gets the training base rate
+    gap_pred = extras["gap_pred"]
+    log("bootstrapping skill scores")
+    primary["extra"] = {
+        "naive_baseline_probability": p0,
+        "brier_skill_vs_naive": grouped_bootstrap(
+            st, lambda i: 1 - np.mean((yt[i] - test_cal[i]) ** 2) / np.mean((yt[i] - p0) ** 2), rng),
+        "auc_gain_vs_inactivity_gap": grouped_bootstrap(
+            st, lambda i: roc_auc_score(yt[i], test_cal[i]) - roc_auc_score(yt[i], gap_pred[i]), rng),
+    }
+    clipped = np.clip(test_cal, 1e-4, 1 - 1e-4)
+    recal = LogisticRegression(C=1e6, max_iter=1000).fit(np.log(clipped / (1 - clipped)).reshape(-1, 1), yt)
+    primary["extra"]["calibration_slope"] = float(recal.coef_[0][0])  # 1.0 is perfect
+    primary["extra"]["calibration_intercept"] = float(recal.intercept_[0])  # 0.0 is perfect
 
     # Out-of-time: learn from 2013 presentations, test on 2014 ones, with students seen in 2013 removed.
     is13 = np.char.startswith(presentation.astype(str), "2013")
@@ -306,6 +343,7 @@ def main():
                   f"Brier {m['brier']:.4f}  ECE {m['ece']:.4f}  base rate {m['base_rate']:.3f}")
     print("\nlevel bands (observed 4-week withdrawal rate):", primary["level_bands"])
     print("\ncoefficients:", {k: round(float(v), 3) for k, v in zip(MODEL_FEATURES, coef)})
+    print("extra:", json.dumps(primary["extra"], indent=1))
     print("AUC 95% CI:", primary["padhotec_model_calibrated"]["roc_auc_95ci"],
           " top-decile capture:", round(primary["padhotec_model_calibrated"]["top_decile_capture"], 3))
 
